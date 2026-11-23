@@ -108,7 +108,22 @@ function update(self: Knowledge, content: Knowledge['content']): Knowledge {
   };
 }
 
+/**
+ * ナレッジを更新日時の新しい順（降順）に並び替える
+ *
+ * @param knowledges 並び替え対象のナレッジ配列
+ * @returns 更新日時降順に並び替えた新しい配列
+ */
+function sortByUpdatedAt(knowledges: readonly Knowledge[]): Knowledge[] {
+  return knowledges.toSorted((a, b) => {
+    if (b.updatedAt !== a.updatedAt) return b.updatedAt - a.updatedAt;
+    if (b.createdAt !== a.createdAt) return b.createdAt - a.createdAt;
+    return a.knowledgeId.localeCompare(b.knowledgeId);
+  });
+}
+
 export const Knowledge = {
   create,
   update,
+  sortByUpdatedAt,
 };

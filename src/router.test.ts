@@ -126,6 +126,49 @@ describe('Knowledge list', () => {
     expect(response.status).toBe(200);
     expect(html).toContain('一覧のタイトル');
   });
+
+  it('一覧画面にナレッジを更新日時の新しい順で表示し、更新日時を出力する', async () => {
+    const oldest: Knowledge = {
+      __tag: 'Knowledge',
+      knowledgeId: 'id-oldest',
+      title: '未更新の古いナレッジ',
+      content: '本文1',
+      authorId: 'author-1',
+      createdAt: 1_700_000_000,
+      updatedAt: 1_700_000_000,
+    };
+    const middle: Knowledge = {
+      __tag: 'Knowledge',
+      knowledgeId: 'id-middle',
+      title: '新しく作成したナレッジ',
+      content: '本文2',
+      authorId: 'author-2',
+      createdAt: 1_700_000_100,
+      updatedAt: 1_700_000_100,
+    };
+    const recentlyUpdated: Knowledge = {
+      __tag: 'Knowledge',
+      knowledgeId: 'id-updated',
+      title: '更新された古いナレッジ',
+      content: '更新後の本文',
+      authorId: 'author-1',
+      createdAt: 1_699_999_900,
+      updatedAt: 1_700_000_200,
+    };
+    vi.spyOn(KnowledgeRepository, 'getAll').mockResolvedValue([oldest, middle, recentlyUpdated]);
+
+    const response = await router.request('/');
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    const updatedIndex = html.indexOf('更新された古いナレッジ');
+    const middleIndex = html.indexOf('新しく作成したナレッジ');
+    const oldestIndex = html.indexOf('未更新の古いナレッジ');
+    expect(updatedIndex).toBeGreaterThan(-1);
+    expect(middleIndex).toBeGreaterThan(updatedIndex);
+    expect(oldestIndex).toBeGreaterThan(middleIndex);
+    expect(html).toContain(new Date(recentlyUpdated.updatedAt * 1000).toISOString());
+  });
 });
 
 describe('Knowledge detail', () => {

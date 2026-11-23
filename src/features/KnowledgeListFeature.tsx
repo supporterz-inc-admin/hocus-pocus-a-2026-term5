@@ -30,7 +30,7 @@ export function KnowledgeListFeature({ userName, knowledges }: Props) {
               <a class="block hover:opacity-70" href={`/knowledges/${knowledge.knowledgeId}`}>
                 <div class="mb-2xs flex items-center justify-between text-(length:--font-size-12) text-gray-600">
                   <span>{knowledge.authorId}</span>
-                  <Timestamp value={knowledge.createdAt} />
+                  <Timestamp value={knowledge.updatedAt} />
                 </div>
                 {knowledge.title && (
                   <h2 class="mb-3xs text-(length:--font-size-16) font-bold text-gray-900">{knowledge.title}</h2>

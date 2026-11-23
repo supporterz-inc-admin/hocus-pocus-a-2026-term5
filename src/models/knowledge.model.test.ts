@@ -101,3 +101,93 @@ describe('Update Knowledge', () => {
     expect(() => Knowledge.update(original, ' \n\t ')).toThrow('本文を入力してください');
   });
 });
+
+// Knowledge.sortByUpdatedAt() の動作をまとめるテストグループ
+describe('Sort Knowledge by updatedAt', () => {
+  it('updatedAt の新しい順（降順）に並び替える', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    const oldest = Knowledge.create('古い記事', '本文1', 'author-1');
+
+    vi.advanceTimersByTime(10_000);
+    const middle = Knowledge.create('中間の記事', '本文2', 'author-1');
+
+    vi.advanceTimersByTime(10_000);
+    const newest = Knowledge.create('新しい記事', '本文3', 'author-1');
+
+    expect(Knowledge.sortByUpdatedAt([oldest, newest, middle])).toEqual([newest, middle, oldest]);
+  });
+
+  it('既存ナレッジを更新すると、更新したナレッジが先頭に来る', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    const first = Knowledge.create('最初に作成', '本文1', 'author-1');
+
+    vi.advanceTimersByTime(10_000);
+    const second = Knowledge.create('2番目に作成', '本文2', 'author-1');
+
+    vi.advanceTimersByTime(10_000);
+    const updatedFirst = Knowledge.update(first, '更新後の本文1');
+
+    expect(Knowledge.sortByUpdatedAt([second, updatedFirst])).toEqual([updatedFirst, second]);
+  });
+
+  it('updatedAt が同じ場合は createdAt 降順・knowledgeId 昇順で安定して並ぶ', () => {
+    const olderCreated: Knowledge = {
+      __tag: 'Knowledge',
+      knowledgeId: 'a-id',
+      title: '作成が古い',
+      content: '本文',
+      authorId: 'author-1',
+      createdAt: 100,
+      updatedAt: 200,
+    };
+    const newerCreatedB: Knowledge = {
+      __tag: 'Knowledge',
+      knowledgeId: 'b-id',
+      title: '作成が新しい B',
+      content: '本文',
+      authorId: 'author-1',
+      createdAt: 150,
+      updatedAt: 200,
+    };
+    const newerCreatedA: Knowledge = {
+      __tag: 'Knowledge',
+      knowledgeId: 'a-id',
+      title: '作成が新しい A',
+      content: '本文',
+      authorId: 'author-1',
+      createdAt: 150,
+      updatedAt: 200,
+    };
+
+    expect(Knowledge.sortByUpdatedAt([olderCreated, newerCreatedB, newerCreatedA])).toEqual([
+      newerCreatedA,
+      newerCreatedB,
+      olderCreated,
+    ]);
+  });
+
+  it('元の配列を変更せず新しい配列を返す', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    const older = Knowledge.create('古い記事', '本文1', 'author-1');
+
+    vi.advanceTimersByTime(10_000);
+    const newer = Knowledge.create('新しい記事', '本文2', 'author-1');
+
+    const input = [older, newer];
+    const sorted = Knowledge.sortByUpdatedAt(input);
+
+    expect(sorted).toEqual([newer, older]);
+    expect(sorted).not.toBe(input);
+    expect(input).toEqual([older, newer]);
+  });
+
+  it('空配列や 1 件のみの配列でも正常に動作する', () => {
+    const single = Knowledge.create('1件だけ', '本文', 'author-1');
+
+    expect(Knowledge.sortByUpdatedAt([])).toEqual([]);
+    expect(Knowledge.sortByUpdatedAt([single])).toEqual([single]);
+  });
+});
